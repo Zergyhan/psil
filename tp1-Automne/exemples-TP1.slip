@@ -1,0 +1,47 @@
+;;; Quelques exemples.                                  -*- coding: utf-8 -*-
+
+;;; D'abord quelques exemples sans sucre syntaxique ni récursion.
+
+2                                       ; ↝ 2
++                                       ; ↝ <function>
+;(4 (2 +))                               ; ↝ 6   (Lpipe (Lnum 4) (Lpipe (Lnum 2) (Lvar "+"))) => (Vnum 4 (Vnum 2 <function>)) 
+
+;(2 (lambda (x) x))                      ; ↝ 2                                          ** Lfn
+
+;(5 
+  (3
+    (lambda (x) (lambda (y) (y (x *))))))   ; ↝ 15                                       **Lfn
+
+
+
+ 
+;(cons nil)                              ; ↝ [nil]                                      ** Lcons 
+;(cons cons 1 2)                         ; ↝ [cons 1 2]                                 ** Lcons
+
+(case (cons cons 1 2) ((nil) 1) ((cons x y) (y (x +)))) ; ↝ 3                          ** Lcase
+;(case (cons cons 1 2) (_ 1)     ((cons x y) (y (x +)))) ; ↝ 1                          ** Lcase
+
+(if (4 (3 >)) 5 6)                        ; ↝ 6 si 3 > 4 alors 5 sinon 6               ** Lcase
+
+(slet ((x 1)) x)                        ; ↝ 1                                          ** Llet BindingType
+(dlet (((f x y) (y ((1 (x +)) *)))) (6 (5 f))) ; ↝ 36                                  ** Llet BindingType
+
+(slet (((curried+ x) (lambda (y) (y (x +))))                                           ** Llet BindingType
+       (x 7))
+  (6 (5 curried+)))                     ; ↝ 11    curried+ c est le nom de la fct                                      ** Llet BindingType
+
+(dlet (((curried+ x1) (dlet ((x x1)) (lambda (y) (y (x +)))))                          
+       (x 7))
+  (6 (5 curried+)))                     ; ↝ 13      5 = x1 et on assigne x1 à 5                                   ** Llet BindingType
+
+(dlet (((fact n)
+        (if (1 (n <=)) n (((1 (n -)) fact) (n *)))))
+  (5 fact))                             ; ↝ 120                                        ** Llet BindingType
+
+(slet (((Y f)
+        (lambda (n)
+          (slet ((f1 (lambda (x n) (n ((lambda (n) (n (x x))) f)))))
+            (n (f1 f1)))))
+       ((fact fact1 n)
+          (if (1 (n <=)) n (((1 (n -)) fact1) (n *)))))
+  (5 (fact Y)))                         ; ↝ 120                                        ** Llet BindingType

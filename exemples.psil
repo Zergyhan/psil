@@ -1,0 +1,25 @@
+;;; Quelques exemples.                                  -*- coding: utf-8 -*-
+
+2                                       ; ↝ 2 : Int
++                                       ; ↝ <function> : Int -> Int -> Int
+(+ 2)                                   ; ↝ <function> : Int -> Int
+((+ 2) 4)                               ; ↝ 6 : Int
+(: (+ 5) (Int -> Int))                  ; ↝ <function> : Int -> Int
+
+(nil Int)                               ; ↝ [] : List Int
+
+(+ 2 5)                                 ; ↝ 7 : Int
+
+(cons 5 (nil Int))                      ; ↝ [5] : List Int
+
+(let ((x 5)) (* x 4))                   ; ↝ 20 : Int
+
+(list Int 4 2)                          ; ↝ [4,2] : List Int
+
+(let ((x 5) (y 3)) (* x y))             ; ↝ 15 : Int
+
+(letfn sum ((xs (List Int))) Int
+    (case xs
+      (nil 0)
+      ((cons x xs) (+ x (sum xs))))
+  (sum (list Int 5 6)))                 ; ↝ 11 : Int
