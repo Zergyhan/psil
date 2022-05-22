@@ -214,9 +214,40 @@ s2l (Scons (Scons Snil (Ssym "nil")) se) = Lnil (s2t se)
 -- ¡¡¡ COMPLETER ICI !!! --
 
 -- Generic in built operator
+-- (Scons (Scons (Scons Snil (Ssym "+")) (Snum 1)) (Snum 2))
 s2l (Scons (Scons (Snil) (Ssym op)) re) = (Linvoke (s2l (Ssym op)) (s2l re))
-
--- Case
+--
+--s2l (Scons
+--
+------------------other years------------------------
+----solupartiellea21
+--s2l (Scons firstArg fnExp) =
+--    let buildPipe :: Lexp -> Sexp -> Lexp
+--        buildPipe arg (Scons fn Snil) = Lpipe arg (s2l fn)
+--        buildPipe arg (Scons fn rem) = buildPipe (Lpipe arg (s2l fn)) rem
+--    in buildPipe (s2l firstArg) fnExp
+--
+----corrigé 2008
+---- foldl sur des s-listes
+--sfoldl f base Snil            = base
+--sfoldl f base (Scons car cdr) = sfoldl f (f base car) cdr
+----
+--s2l (Scons op (Scons Snil re)) = Linvoke (s2l op) (compile re)
+--s2l (Scons op res@(Scons _ _)) =
+--    sfoldl (\fun -> \re -> Linvoke fun (s2l re)) (s2l op) res
+--s2l (sexp@(Scons _ _)) =
+--    error ("unknown function application: " ++ show sexp)
+--
+----chrisa21
+---- Appel de fonction à un ou plusieurs arguments
+--s2l (Scons (Scons (Ssym e0) (Scons es Snil)))
+--    = Lpipe (Lpipe e0 (s2l es))
+--
+----bitbucket
+----by default we perform a function application
+--s2l (Scons e1 e2) = Lapp (s2l e1) (s2l e2)
+--Lapp Lexp Lexp
+------------------end of other years------------------------
 
 
 
@@ -305,15 +336,16 @@ eval env (Lannot e _) = eval env e
 -- eval env (Linvoke (f) (exp)) = (env f) (eval env exp)
 --eval env (Linvoke (f) (exp)) =
 --eval env (Linvoke e1 e2) = if ((eval env e1) == (Vlambda f)) then (f (eval env e2))
---  case eval env e of
---    Vlambda f -> f (eval env re)
---    _ -> error ("Not a function: " ++ show e)
+eval env (Linvoke e re) =
+  case eval env e of
+    Vlambda f -> f (eval env re)
+    _ -> error ("Not a function: " ++ show e)
 
 
-eval env (Linvoke e1 e2) =
-    case eval env e1 of
-      Vlambda f -> f (eval env e2)
-      _ -> error "Not a function"
+--eval env (Linvoke e1 e2) =
+--    case eval env e1 of
+--      Vlambda f -> f (eval env e2)
+--      _ -> error "Not a function"
 
 --eval env (Linvoke e1 e2) =
 --  case eval env e1 of
