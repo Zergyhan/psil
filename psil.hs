@@ -211,11 +211,139 @@ s2l :: Sexp -> Lexp
 s2l (Snum n) = Lnum n
 s2l (Ssym s) = Lvar s
 s2l (Scons (Scons Snil (Ssym "nil")) se) = Lnil (s2t se)
--- ¡¡¡ COMPLETER ICI !!! --
+-- Appel de fonction
+s2l (Scons (Scons Snil (Ssym op)) re) = (Linvoke (s2l (Ssym op)) (s2l re))
+--s2l (Scons (Scons (Scons Snil (Ssym op)) Snum 5)
 
+-- ((+ 2) 3) => Lexp? (Lnum 5 : Lint) (Lnum 5)
+-- (Linvoke (Linvoke (Lvar "+") (Lnum 3)) (Lnum 2))
+-- tenv0 "+" = Lfun Lint (Lfun Lint Lint)
+s2l (Scons (Scons Snil (Scons (Scons Snil (Ssym op)) e1)) e2) =  (Linvoke (Linvoke (s2l (Ssym op)) (s2l e1)) (s2l e2))
+--s2l (Scons (Scons Snil (Ssym op)) re) =  (Linvoke (s2l (Ssym op)) (s2l e1) (s2l re))
+-- TODO: FAIRE CAS e1 e2 e3 .. en
+
+--TODO: FAIRE CAS (+ 2 5)
+s2l (Scons (Scons (Scons Snil (Ssym op)) e1) e2) = (Linvoke (Linvoke (s2l (Ssym op)) (s2l e1)) (s2l e2))
+-- TODO: FAIRE CAS e1 e2 e3 .. en
+
+--((+ 2) 5)
+-- =
+-- Scons (Scons Snil
+--       (Scons (Scons Snil (Ssym "+")) (Snum 2))) (Snum 5)
+--(+ 2 5)
+-- =
+-- Scons (Scons (Scons Snil (Ssym "+")) (Snum 2)) (Snum 5)
+
+
+-- Annotation de type
+s2l (Scons (Scons (Scons Snil (Ssym ":")) e) t) = (s2l e)
+--Lannot Lexp Ltype   -- Annotation de type.
+-- (: (+ 5) (Int -> Int))                  ; <function> : Int -> Int
+-- equiv
+-- Scons (Scons (Scons Snil (Ssym ":")) (Scons (Scons Snil (Ssym "+")) (Snum 5))) (Scons (Scons (Scons Snil (Ssym "Int")) (Ssym "->")) (Ssym "Int"))
+
+
+
+-- Construction de listes avec cons (sans sucre syntaxique)
+-- MAYBE? cas (cons [] [])
+
+-- cas (cons e1 [])
+
+-- cas (cons [] e2)
+
+-- cas (cons e1 e2)
+s2l (Scons (Scons (Scons Snil (Ssym "cons")) e1) initalList) = (Lcons (s2l e1) (s2l initalList))
+
+--(cons 5 (nil Int))                      ; [5] : List Int
+--data Ltype = | Llist Ltype
+--data Lexp = | Lcons Lexp Lexp     -- Constructeur de liste.
+
+--(cons 1 2)
+--Scons (Scons (Scons Snil (Ssym "cons")) (Snum 1)) (Snum 2)
+--
+--(cons 5 (nil Int))
+--Scons (Scons (Scons Snil (Ssym "cons")) (Snum 5)) (Scons (Scons Snil (Ssym "nil")) (Ssym "Int"))
+--
+--(cons (nil Int) 5)
+--Scons (Scons (Scons Snil (Ssym "cons")) (Scons (Scons Snil (Ssym "nil")) (Ssym "Int"))) (Snum 5)
+--
+--
+--(cons 5 [blabla])
+--Scons (Scons (Scons Snil (Ssym "cons")) (Snum 5)) (s2l blabla)
+
+--slip-all_2008_1.hs:
+--Lexp =  Lfix [(Var,Lexp)] Lexp
+-- Let:
+--compile (Scons (Ssym "let")
+--               (Scons bindings (Scons body Snil))) =
+--    Lfix (parseFixBinds bindings) (compile body)          --Lfix ici
+--
+--compile (sexp@(Scons (Ssym "let") _)) =
+--    error ("unknown let exp: " ++ show sexp)
+
+--tp1_bitbucket.hs:
+--Lexp =  Lfix [(Var,Lexp)] Lexp
+--bof...
+
+
+s2l se = error ("Malformed Psil: " ++ (showSexp se))
+
+
+--       whatever
+--       / \
+--   s2lInv s2lre
+
+--s2l
+--(_
+--  (Scons
+--    (Scons
+--      (Scons Snil (Ssym op))
+--    e1)
+--  re@_))
+-- (Linvoke (s2l (Ssym op)) (s2l e1))
+----s2l (Scons op args@(Scons _ _)) =
+----    sfoldl (\fonction -> \argument -> Linvoke fonction (s2l argument)) (s2l op) args
+--s2l (Scons op (Scons e1 Snil))
+--s2l (_ (Scons (Snil op) e1)
+---- Scons (Scons Snil e1) e2 => ((e1) e2) e1 => ((e1) e2)
+--
+--Scons (Scons Snil (Ssym "+")) (Snum 2)
+--
+--
+--(Scons
+--(Scons (Scons Snil (Ssym "+")) (Snum 2))
+--(Snum 3))
+--
+--(Scons
+--(Scons (Scons (Scons Snil (Ssym "+")) (Snum 2)) (Snum 3))
+--(Snum 4))
+--
+--
+--
+--Scons (Scons Snil (Scons (Scons Snil (Ssym "+")) (Snum 2))) (Snum 3) -- ((+ 2) 3)
+--s2l (Scons (Scons Snil (Ssym op)) re@(Scons _ _)) = (\f -> \a -> Linvoke f (s2l a)) (s2l op) re
+--s2l (Scons (Scons Snil (Ssym op)) re@(Scons _ _)) = (Linvoke (s2l (Ssym op)) (s2l re))
+
+
+-- foldl sur des s-listes
+--sfoldl f base Snil            = base
+--sfoldl f base (Scons car cdr) = sfoldl f (f base car) cdr
+--
+--s2l (Scons f (Scons arg Snil)) = Linvoke (s2l f) (s2l arg)
+--s2l (Scons op args@(Scons _ _)) =
+--    sfoldl (\fonction -> \argument -> Linvoke fonction (s2l argument)) (s2l op) args
+
+
+
+
+
+----data Lexp = Linvoke Lexp [Lexp]
+--compile (Scons (Scons Snil f) arg) = Lapp (compile f) [(compile arg)]
+----by default we perform a function application
+--compile (Scons e1 e2) = Lapp (compile e1) [(compile e2)]
 -- Generic in built operator
 -- (Scons (Scons (Scons Snil (Ssym "+")) (Snum 1)) (Snum 2))
-s2l (Scons (Scons (Snil) (Ssym op)) re) = (Linvoke (s2l (Ssym op)) (s2l re))
+
 --
 --s2l (Scons
 --
@@ -250,16 +378,21 @@ s2l (Scons (Scons (Snil) (Ssym op)) re) = (Linvoke (s2l (Ssym op)) (s2l re))
 ------------------end of other years------------------------
 
 
+--data Ltype = Lint
+--           | Llist Ltype
+--           | Lfun Ltype Ltype
+--data Sexp = Snil                        -- La liste vide
+--          | Scons Sexp Sexp             -- Une paire
+--          | Ssym String                 -- Un symbole
+--          | Snum Int                    -- Un entier
 
-
-s2l se = error ("Malformed Psil: " ++ (showSexp se))
 
 s2t :: Sexp -> Ltype
 s2t (Ssym "Int") = Lint
 -- Type d'une liste - t ::= (List t)
-s2t (Scons (Scons (Snil) (Ssym "List")) typeListe) = Llist (s2t typeListe)
+s2t (Scons (Scons (Snil) (Ssym "List")) typeListe) = (Llist (s2t typeListe))
 -- Type d'une fonction t ::= (t1 ... tn -> t <=> t1 -> t2 - > ...(tn -> t)...))
---s2t (Scons (Scons (Scons Snil t1) (typeReste) t
+s2t (Scons (Scons Snil t1) (typeReste)) = (Lfun (s2t t1) (s2t typeReste))
 -- ¡¡¡ COMPLETER ICI !!! --
 s2t se = error ("Malformed Psil type: " ++ (showSexp se))
 
@@ -267,12 +400,24 @@ s2t se = error ("Malformed Psil type: " ++ (showSexp se))
 -- Vérification des types                                                --
 ---------------------------------------------------------------------------
 
+--data Ltype = Lint
+--           | Llist Ltype
+--           | Lfun Ltype Ltype
+--data Lexp = Lnum Int            -- Constante entière.
+--          | Lvar Var            -- Référence à une variable.
+--          | Lannot Lexp Ltype   -- Annotation de type.
+--          | Linvoke Lexp Lexp   -- Appel de fonction, avec un argument.
+--          | Lnil Ltype          -- Constructeur de liste vide.
+--          | Lcons Lexp Lexp     -- Constructeur de liste.
+--          | Lcase Lexp Lexp Var Var Lexp -- Expression conditionelle.
+--          | Llet Var Lexp Lexp  -- Déclaration de variable locale.\
 type TEnv = Var -> Ltype
 
 check :: TEnv -> Lexp -> Ltype
 check _tenv (Lnum _) = Lint
 check tenv (Lvar v) = tenv v
 -- ¡¡¡ COMPLETER ICI !!! --
+
 
 tenv0 :: TEnv
 tenv0 "+" = Lfun Lint (Lfun Lint Lint)
@@ -351,6 +496,23 @@ eval env (Linvoke e re) =
 --  case eval env e1 of
 --    Vlambda f -> f (eval env e2)
 --    _ -> error "Not a function"
+
+
+-- Liste vide
+eval env (Lnil _) = Vnil
+-- Lnil Ltype          -- Constructeur de liste vide.
+-- s2l (Scons (Scons Snil (Ssym "nil")) se) = Lnil (s2t se)
+
+
+
+-- Construction de listes
+eval _env (Lcons e1 e2) = Vcons (eval _env e1) (eval _env e2)
+--s2l (Scons (Scons (Scons Snil (Ssym "cons")) e1) initalList) = (Lcons (s2l e1) (s2l initalList))
+-- a Lexp = | Lcons Lexp Lexp     -- Constructeur de liste.
+--data Value = | Vcons Value Value
+
+
+
 
 
 
