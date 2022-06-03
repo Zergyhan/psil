@@ -490,6 +490,11 @@ eval env (Linvoke e re) =
     Vlambda f -> f (eval env re)
     _ -> error ("Not a function: " ++ show e)
 
+eval env (Llet x val body) =
+    let v = eval env val
+        env' y = if (x == y) then v else env y
+    in eval env' body
+
 
 --eval env (Linvoke e1 e2) =
 --    case eval env e1 of
