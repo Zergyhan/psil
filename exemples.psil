@@ -10,7 +10,7 @@
 
 ;(+ 2 5)                                 ; ↝ 7 : Int
 
-(cons 5 (nil Int))                      ; ↝ [5] : List Int
+;(cons 5 (nil Int))                      ; ↝ [5] : List Int
 
 (let ((x 5)) (* x 4))                   ; ↝ 20 : Int
 

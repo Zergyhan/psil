@@ -211,10 +211,15 @@ s2l :: Sexp -> Lexp
 s2l (Snum n) = Lnum n
 s2l (Ssym s) = Lvar s
 s2l (Scons (Scons Snil (Ssym "nil")) se) = Lnil (s2t se)
+-- Cons lists
+s2l (Scons (Scons (Scons Snil (Ssym "cons")) e1) initalList) = (Lcons (s2l e1) (s2l initalList))
+-- Let expressions
+s2l (Scons (Scons (Scons Snil (Ssym "let")) (Scons Snil (Scons (Scons Snil (Ssym var)) val))) body) = (Llet var (s2l val) (s2l body))
+--  (Scons (Scons (Scons Snil (Ssym "let")) (Scons Snil (Scons (Scons Snil (Ssym "x")) (Snum 5)))) (Scons (Scons (Scons Snil (Ssym "*")) (Ssym "x")) (Snum 4))
+
 -- Appel de fonction
 s2l (Scons (Scons Snil (Ssym op)) re) = (Linvoke (s2l (Ssym op)) (s2l re))
 --s2l (Scons (Scons (Scons Snil (Ssym op)) Snum 5)
-
 -- ((+ 2) 3) => Lexp? (Lnum 5 : Lint) (Lnum 5)
 -- (Linvoke (Linvoke (Lvar "+") (Lnum 3)) (Lnum 2))
 -- tenv0 "+" = Lfun Lint (Lfun Lint Lint)
@@ -252,7 +257,6 @@ s2l (Scons (Scons (Scons Snil (Ssym ":")) e) t) = (s2l e)
 -- cas (cons [] e2)
 
 -- cas (cons e1 e2)
-s2l (Scons (Scons (Scons Snil (Ssym "cons")) e1) initalList) = (Lcons (s2l e1) (s2l initalList))
 
 --(cons 5 (nil Int))                      ; [5] : List Int
 --data Ltype = | Llist Ltype
