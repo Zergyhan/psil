@@ -210,229 +210,98 @@ data Lexp = Lnum Int            -- Constante entière.
 s2l :: Sexp -> Lexp
 s2l (Snum n) = Lnum n
 s2l (Ssym s) = Lvar s
+-- Annotation de type
+s2l (Scons (Scons (Scons Snil (Ssym ":")) (expression)) t) =
+  (Lannot (s2l expression) (s2t t))
+-- Constructeur de listes vides
 s2l (Scons (Scons Snil (Ssym "nil")) se) = Lnil (s2t se)
 -- Cons lists
-s2l (Scons (Scons (Scons Snil (Ssym "cons")) e1) initalList) = (Lcons (s2l e1) (s2l initalList))
+s2l (Scons (Scons (Scons Snil (Ssym "cons")) e1) initalList) =
+  (Lcons (s2l e1) (s2l initalList))
+-- List list
+
+
 -- Let expressions
-s2l (Scons (Scons (Scons Snil (Ssym "let")) (Scons Snil (Scons (Scons Snil (Ssym var)) val))) body) = (Llet var (s2l val) (s2l body))
+s2l (Scons (Scons (Scons Snil (Ssym "let"))
+  (Scons Snil (Scons (Scons Snil (Ssym var)) val))) body) =
+    (Llet var (s2l val) (s2l body))
+-- Fancy Let expressions
+
 
 -- Appel de fonction
+-- Sans sucre syntaxique
 s2l (Scons (Scons Snil (Ssym op)) re) = (Linvoke (s2l (Ssym op)) (s2l re))
---s2l (Scons (Scons (Scons Snil (Ssym op)) Snum 5)
--- ((+ 2) 3) => Lexp? (Lnum 5 : Lint) (Lnum 5)
--- (Linvoke (Linvoke (Lvar "+") (Lnum 3)) (Lnum 2))
--- tenv0 "+" = Lfun Lint (Lfun Lint Lint)
-s2l (Scons (Scons Snil (Scons (Scons Snil (Ssym op)) e1)) e2) =  (Linvoke (Linvoke (s2l (Ssym op)) (s2l e1)) (s2l e2))
---s2l (Scons (Scons Snil (Ssym op)) re) =  (Linvoke (s2l (Ssym op)) (s2l e1) (s2l re))
--- TODO: FAIRE CAS e1 e2 e3 .. en
-
---TODO: FAIRE CAS (+ 2 5)
-s2l (Scons (Scons (Scons Snil (Ssym op)) e1) e2) = (Linvoke (Linvoke (s2l (Ssym op)) (s2l e1)) (s2l e2))
--- TODO: FAIRE CAS e1 e2 e3 .. en
-
---((+ 2) 5)
--- =
--- Scons (Scons Snil
---       (Scons (Scons Snil (Ssym "+")) (Snum 2))) (Snum 5)
---(+ 2 5)
--- =
--- Scons (Scons (Scons Snil (Ssym "+")) (Snum 2)) (Snum 5)
-
-
--- Annotation de type
-s2l (Scons (Scons (Scons Snil (Ssym ":")) e) t) = (s2l e)
---Lannot Lexp Ltype   -- Annotation de type.
--- (: (+ 5) (Int -> Int))                  ; <function> : Int -> Int
--- equiv
--- Scons (Scons (Scons Snil (Ssym ":")) (Scons (Scons Snil (Ssym "+")) (Snum 5))) (Scons (Scons (Scons Snil (Ssym "Int")) (Ssym "->")) (Ssym "Int"))
-
+s2l (Scons (Scons Snil (Scons (Scons Snil (Ssym op)) e0)) e1) =
+  (Linvoke (Linvoke (s2l (Ssym op)) (s2l e0)) (s2l e1))
+s2l (Scons (Scons Snil (Scons (Scons Snil (
+  Scons (Scons Snil (Ssym op)) e0)) e1)) e2) =
+  (Linvoke (Linvoke (Linvoke (s2l (Ssym op)) (s2l e0)) (s2l e1)) (s2l e2))
+s2l (Scons (Scons Snil (Scons (Scons Snil (
+  Scons (Scons Snil (Scons (Scons Snil (Ssym op)) e0)) e1)) e2)) e3) =
+  (Linvoke (Linvoke (Linvoke (Linvoke (s2l (Ssym op)) (s2l e0)) (s2l e1))
+  (s2l e2)) (s2l e3))
+s2l (Scons (Scons Snil (Scons (Scons Snil
+  (Scons (Scons Snil (Scons (Scons Snil (Scons (Scons Snil (Ssym op))
+   e0)) e1)) e2)) e3)) e4) =
+  (Linvoke (Linvoke (Linvoke (Linvoke (Linvoke (s2l (Ssym op))
+  (s2l e0)) (s2l e1)) (s2l e2)) (s2l e3)) (s2l e4))
+-- Avec sucre syntaxique
+s2l (Scons (Scons (Scons Snil (Ssym op)) e0) e1) =
+  (Linvoke (Linvoke (s2l (Ssym op)) (s2l e0)) (s2l e1))
+s2l (Scons (Scons (Scons (Scons Snil (Ssym op)) e0) e1) e2) =
+  (Linvoke (Linvoke (Linvoke (s2l (Ssym op)) (s2l e0)) (s2l e1)) (s2l e2))
+s2l (Scons (Scons (Scons (Scons (Scons Snil (Ssym op)) e0) e1) e2) e3) =
+  (Linvoke (Linvoke (Linvoke (Linvoke (s2l (Ssym op)) (s2l e0)) (s2l e1))
+  (s2l e2)) (s2l e3))
+s2l (Scons (Scons (Scons (Scons (Scons (Scons Snil (Ssym op)) e0) e1) e2) e3)
+ e4) =
+  (Linvoke (Linvoke (Linvoke (Linvoke (Linvoke (s2l (Ssym op)) (s2l e0))
+  (s2l e1)) (s2l e2)) (s2l e3)) (s2l e4))
 
 
 s2l se = error ("Malformed Psil: " ++ (showSexp se))
 
--- Construction de listes avec cons (sans sucre syntaxique)
--- MAYBE? cas (cons [] [])
-
--- cas (cons e1 [])
-
--- cas (cons [] e2)
-
--- cas (cons e1 e2)
-
---(cons 5 (nil Int))                      ; [5] : List Int
---data Ltype = | Llist Ltype
---data Lexp = | Lcons Lexp Lexp     -- Constructeur de liste.
-
---(cons 1 2)
---Scons (Scons (Scons Snil (Ssym "cons")) (Snum 1)) (Snum 2)
---
---(cons 5 (nil Int))
---Scons (Scons (Scons Snil (Ssym "cons")) (Snum 5)) (Scons (Scons Snil (Ssym "nil")) (Ssym "Int"))
---
---(cons (nil Int) 5)
---Scons (Scons (Scons Snil (Ssym "cons")) (Scons (Scons Snil (Ssym "nil")) (Ssym "Int"))) (Snum 5)
---
---
---(cons 5 [blabla])
---Scons (Scons (Scons Snil (Ssym "cons")) (Snum 5)) (s2l blabla)
-
---slip-all_2008_1.hs:
---Lexp =  Lfix [(Var,Lexp)] Lexp
--- Let:
---compile (Scons (Ssym "let")
---               (Scons bindings (Scons body Snil))) =
---    Lfix (parseFixBinds bindings) (compile body)          --Lfix ici
---
---compile (sexp@(Scons (Ssym "let") _)) =
---    error ("unknown let exp: " ++ show sexp)
-
---tp1_bitbucket.hs:
---Lexp =  Lfix [(Var,Lexp)] Lexp
---bof...
-
-
-
-
---       whatever
---       / \
---   s2lInv s2lre
-
---s2l
---(_
---  (Scons
---    (Scons
---      (Scons Snil (Ssym op))
---    e1)
---  re@_))
--- (Linvoke (s2l (Ssym op)) (s2l e1))
-----s2l (Scons op args@(Scons _ _)) =
-----    sfoldl (\fonction -> \argument -> Linvoke fonction (s2l argument)) (s2l op) args
---s2l (Scons op (Scons e1 Snil))
---s2l (_ (Scons (Snil op) e1)
----- Scons (Scons Snil e1) e2 => ((e1) e2) e1 => ((e1) e2)
---
---Scons (Scons Snil (Ssym "+")) (Snum 2)
---
---
---(Scons
---(Scons (Scons Snil (Ssym "+")) (Snum 2))
---(Snum 3))
---
---(Scons
---(Scons (Scons (Scons Snil (Ssym "+")) (Snum 2)) (Snum 3))
---(Snum 4))
---
---
---
---Scons (Scons Snil (Scons (Scons Snil (Ssym "+")) (Snum 2))) (Snum 3) -- ((+ 2) 3)
---s2l (Scons (Scons Snil (Ssym op)) re@(Scons _ _)) = (\f -> \a -> Linvoke f (s2l a)) (s2l op) re
---s2l (Scons (Scons Snil (Ssym op)) re@(Scons _ _)) = (Linvoke (s2l (Ssym op)) (s2l re))
-
-
--- foldl sur des s-listes
---sfoldl f base Snil            = base
---sfoldl f base (Scons car cdr) = sfoldl f (f base car) cdr
---
---s2l (Scons f (Scons arg Snil)) = Linvoke (s2l f) (s2l arg)
---s2l (Scons op args@(Scons _ _)) =
---    sfoldl (\fonction -> \argument -> Linvoke fonction (s2l argument)) (s2l op) args
-
-
-
-
-
-----data Lexp = Linvoke Lexp [Lexp]
---compile (Scons (Scons Snil f) arg) = Lapp (compile f) [(compile arg)]
-----by default we perform a function application
---compile (Scons e1 e2) = Lapp (compile e1) [(compile e2)]
--- Generic in built operator
--- (Scons (Scons (Scons Snil (Ssym "+")) (Snum 1)) (Snum 2))
-
---
---s2l (Scons
---
-------------------other years------------------------
-----solupartiellea21
---s2l (Scons firstArg fnExp) =
---    let buildPipe :: Lexp -> Sexp -> Lexp
---        buildPipe arg (Scons fn Snil) = Lpipe arg (s2l fn)
---        buildPipe arg (Scons fn rem) = buildPipe (Lpipe arg (s2l fn)) rem
---    in buildPipe (s2l firstArg) fnExp
---
-----corrigé 2008
----- foldl sur des s-listes
---sfoldl f base Snil            = base
---sfoldl f base (Scons car cdr) = sfoldl f (f base car) cdr
-----
---s2l (Scons op (Scons Snil re)) = Linvoke (s2l op) (compile re)
---s2l (Scons op res@(Scons _ _)) =
---    sfoldl (\fun -> \re -> Linvoke fun (s2l re)) (s2l op) res
---s2l (sexp@(Scons _ _)) =
---    error ("unknown function application: " ++ show sexp)
---
-----chrisa21
----- Appel de fonction à un ou plusieurs arguments
---s2l (Scons (Scons (Ssym e0) (Scons es Snil)))
---    = Lpipe (Lpipe e0 (s2l es))
---
-----bitbucket
-----by default we perform a function application
---s2l (Scons e1 e2) = Lapp (s2l e1) (s2l e2)
---Lapp Lexp Lexp
-------------------end of other years------------------------
-
-
---data Ltype = Lint
---           | Llist Ltype
---           | Lfun Ltype Ltype
---data Sexp = Snil                        -- La liste vide
---          | Scons Sexp Sexp             -- Une paire
---          | Ssym String                 -- Un symbole
---          | Snum Int                    -- Un entier
-
 
 s2t :: Sexp -> Ltype
 s2t (Ssym "Int") = Lint
+
 -- Type d'une liste - t ::= (List t)
 s2t (Scons (Scons (Snil) (Ssym "List")) typeListe) = (Llist (s2t typeListe))
+
 -- Type d'une fonction t ::= (t1 ... tn -> t <=> t1 -> t2 - > ...(tn -> t)...))
 s2t (Scons (Scons Snil t1) (typeReste)) = (Lfun (s2t t1) (s2t typeReste))
--- ¡¡¡ COMPLETER ICI !!! --
 s2t se = error ("Malformed Psil type: " ++ (showSexp se))
 
 ---------------------------------------------------------------------------
 -- Vérification des types                                                --
 ---------------------------------------------------------------------------
-
---data Ltype = Lint
---           | Llist Ltype
---           | Lfun Ltype Ltype
---data Lexp = Lnum Int            -- Constante entière.
---          | Lvar Var            -- Référence à une variable.
---          | Lannot Lexp Ltype   -- Annotation de type.
---          | Linvoke Lexp Lexp   -- Appel de fonction, avec un argument.
---          | Lnil Ltype          -- Constructeur de liste vide.
---          | Lcons Lexp Lexp     -- Constructeur de liste.
---          | Lcase Lexp Lexp Var Var Lexp -- Expression conditionelle.
---          | Llet Var Lexp Lexp  -- Déclaration de variable locale.\
 type TEnv = Var -> Ltype
 
 check :: TEnv -> Lexp -> Ltype
 check _tenv (Lnum _) = Lint
 check tenv (Lvar v) = tenv v
+check tenv (Lannot e _) = check tenv e
 -- Vérification de l'appel de fonctions
 check tenv (Linvoke e1 e2) = prune (check tenv e1) (check tenv e2)
 check tenv (Lnil t) = (Llist t)
-check tenv (Lcons e1 e2) = check tenv e2
-check tenv (Llet var val body) = check (extend tenv var (check tenv val)) body
+check tenv (Lcons e1 e2) = fix (check tenv e2)
+check tenv (Llet var val body) = check (
+  extend tenv var (check tenv val)) body
+
+-- Retourne le type t2, le type du retour de fonction, si le
+-- premier élément est une fonction qui prend en argument
+-- une valeur du même type que le type de l'argument.
+prune :: Ltype -> Ltype -> Ltype
+prune (Lfun Lint (t2)) Lint = t2
+prune (Lfun (Llist t) (e2)) (Llist t') = if t == t'
+  then e2 else error "Type mismatch"
+
+fix :: Ltype -> Ltype
+fix (Lint) = (Llist Lint)
+fix a = a
 
 extend :: TEnv -> Var -> Ltype -> TEnv
 extend tenv var t = \v -> if v == var then t else tenv v
-
-
-prune :: Ltype -> Ltype -> Ltype
-prune (Lfun Lint (e2)) Lint = e2
-
 
 tenv0 :: TEnv
 tenv0 "+" = Lfun Lint (Lfun Lint Lint)
@@ -450,7 +319,6 @@ tinsert env var val = \x -> if (x == var) then val else tlookup env x
 ---------------------------------------------------------------------------
 -- Évaluateur                                                            --
 ---------------------------------------------------------------------------
-
 -- Type des valeurs renvoyées par l'évaluateur.
 data Value = Vnum Int
            | Vnil
@@ -490,12 +358,8 @@ eval :: VEnv -> Lexp -> Value
 eval _env (Lnum n) = Vnum n
 eval env (Lvar x) = vlookup env x
 eval env (Lannot e _) = eval env e
--- ¡¡¡ COMPLETER ICI !!! --
--- Example (+ 2)/((+ 2) 3) => Linvoke (Lvar "+") (Lnum 2) /
--- Linvoke (Linvoke (Lvar "+") (Lnum 2)) (Lnum 3)
--- eval env (Linvoke (f) (exp)) = (env f) (eval env exp)
---eval env (Linvoke (f) (exp)) =
---eval env (Linvoke e1 e2) = if ((eval env e1) == (Vlambda f)) then (f (eval env e2))
+
+-- Functions
 eval env (Linvoke e re) =
   case eval env e of
     Vlambda f -> f (eval env re)
@@ -507,115 +371,11 @@ eval env (Llet x val body) =
         env' y = if (x == y) then v else env y
     in eval env' body
 
-
---eval env (Linvoke e1 e2) =
---    case eval env e1 of
---      Vlambda f -> f (eval env e2)
---      _ -> error "Not a function"
-
---eval env (Linvoke e1 e2) =
---  case eval env e1 of
---    Vlambda f -> f (eval env e2)
---    _ -> error "Not a function"
-
-
 -- Liste vide
 eval env (Lnil _) = Vnil
--- Lnil Ltype          -- Constructeur de liste vide.
--- s2l (Scons (Scons Snil (Ssym "nil")) se) = Lnil (s2t se)
-
-
 
 -- Construction de listes
 eval _env (Lcons e1 e2) = Vcons (eval _env e1) (eval _env e2)
---s2l (Scons (Scons (Scons Snil (Ssym "cons")) e1) initalList) = (Lcons (s2l e1) (s2l initalList))
--- a Lexp = | Lcons Lexp Lexp     -- Constructeur de liste.
---data Value = | Vcons Value Value
-
-
-
-
-
-
---
---
---data Lexp = Lnum Int
---          | Lvar Var
---          | Llambda Var Lexp
---          | Lapp Lexp Lexp
---          -- Déclaration simple d'une variable non-récursive.
---          | Llet Var Lexp Lexp
---          -- Déclaration d'une liste de variables qui peuvent être
---          -- mutuellement récursives.
---          | Lfix [(Var,Lexp)] Lexp
---          deriving (Show, Eq)
----- Évaluateur                                                            --
------------------------------------------------------------------------------
---
----- Type des valeurs renvoyées par l'évaluateur.
---data Value = Vnum Int
---           | Vnil
---           | Vcons Value Value
---           | Vfun (Value -> Value) --Vlampda
---
---
---instance Show Value where
---    showsPrec p (Vnum n) = showsPrec p n
---    showsPrec p Vnil = showString "[]"
---    showsPrec p (Vcons v1 v2) =
---        let showTail Vnil = showChar ']'
---            showTail (Vcons v1 v2) =
---                showChar ' ' . showsPrec p v1 . showTail v2
---            showTail v = showString " . " . showsPrec p v . showChar ']'
---        in showChar '[' . showsPrec p v1 . showTail v2
---    showsPrec p _ = showString "<function>"
---
---type Env = Var -> Value --Env c'est Venv
---
----- L'environnement initial qui contient les fonctions prédéfinies.
---env0 :: Env
---env0 "cons" = Vfun (\x -> Vfun (\y -> Vcons x y))
---env0 "nil"  = Vnil
---env0 "car"  = Vfun (\ (Vcons x y) -> x)
---env0 "cdr"  = Vfun (\ (Vcons x y) -> y)
---env0 "cons" = Vfun (\x -> Vfun (\y -> Vcons x y))
---env0 "ifnil"= Vfun (\x -> case x of Vnil      -> Vfun (\y -> Vfun (\_ -> y))
---                                    Vcons _ _ -> Vfun (\_ -> Vfun (\y -> y))
---                                    _ -> error "Not a list")
---env0 "+"    = Vfun (\ (Vnum x) -> Vfun (\ (Vnum y) -> Vnum (x + y)))
---env0 "*"    = Vfun (\ (Vnum x) -> Vfun (\ (Vnum y) -> Vnum (x * y)))
---env0 "/"    = Vfun (\ (Vnum x) -> Vfun (\ (Vnum y) -> Vnum (x `div` y)))
---env0 "-"    = Vfun (\ (Vnum x) -> Vfun (\ (Vnum y) -> Vnum (x - y)))
---env0 x      = error ("Uknown variable: " ++ show x)
---
---elookup :: Env -> Var -> Value
---elookup env = env
---
---einsert :: Env -> Var -> Value -> Env
---einsert env var val = \x -> if (x == var) then val else elookup env x
-----vinsert :: VEnv -> Var -> Value -> VEnv
-----vinsert env var val = \x -> if (x == var) then val else vlookup env x
---
----- La fonction d'évaluation principale.
---eval :: Env -> Lexp -> Value
---eval env (Lnum n) = Vnum n
---eval env (Lvar x) = elookup env x
---eval env (Llambda x e) =
---    Vfun (\v -> eval (einsert env x v) e)
---eval env (Lapp e1 e2) =
---    case eval env e1 of
---      Vfun f -> f (eval env e2)
---      _ -> error "Not a function"
---eval env (Llet x e1 e2) =
---    let v = eval env e1
---        newenv y = if (x == y) then v else env y
---    in eval newenv e2
---eval env (Lfix xs e) =
---    let lookup [] y = env y
---        lookup ((x,e):xs) y = if x == y then eval newenv e else lookup xs y
---        newenv = lookup xs
---    in eval newenv e
-
 
 
 ---------------------------------------------------------------------------
