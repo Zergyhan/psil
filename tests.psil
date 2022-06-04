@@ -1,0 +1,6 @@
+;;; Autres exemples.                                  -*- coding: utf-8 -*-
+
+(cons 5 2)                              ; ↝ [5 . 2] : List Int
+
+
+(list Int 4 2 6 8)                        ; ↝ [4,2,6] : Int
