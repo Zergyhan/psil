@@ -1,18 +1,22 @@
 ;;; Quelques exemples.                                  -*- coding: utf-8 -*-
 
-;(+ 2)                                   ; ↝ <function> : Int -> Int
-;2                                       ; ↝ 2 : Int
-;+                                       ; ↝ <function> : Int -> Int -> Int
-;((+ 2) 4)                               ; ↝ 6 : Int
-;(: (+ 5) (Int -> Int))                  ; ↝ <function> : Int -> Int
+2                                       ; ↝ 2 : Int
 
-;(nil Int)                               ; ↝ [] : List Int
++                                       ; ↝ <function> : Int -> Int -> Int
 
-;(+ 2 5)                                 ; ↝ 7 : Int
+(+ 2)                                   ; ↝ <function> : Int -> Int
 
-;(cons 5 (nil Int))                      ; ↝ [5] : List Int
+((+ 2) 4)                               ; ↝ 6 : Int
 
-;(let ((x 5)) (* x 4))                   ; ↝ 20 : Int
+(: (+ 5) (Int -> Int))                  ; ↝ <function> : Int -> Int
+
+(nil Int)                               ; ↝ [] : List Int
+
+(+ 2 5)                                 ; ↝ 7 : Int
+
+(cons 5 (nil Int))                      ; ↝ [5] : List Int
+
+(let ((x 5)) (* x 4))                   ; ↝ 20 : Int
 
 (list Int 4 2)                          ; ↝ [4,2] : List Int
 
