@@ -1,0 +1,206 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}
+\usepackage[utf8]{inputenc}
+\usepackage[french]{babel}
+\usepackage[T1]{fontenc}
+\usepackage[table]{xcolor}
+\usepackage{listings}
+\usepackage{algpseudocode}
+\usepackage{fancyvrb}
+\usepackage{fancybox}            %For \ovalbox
+\usepackage{amsmath}
+\usepackage{array}
+\usepackage{amsfonts}
+\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{wasysym}
+\usepackage{moreverb}
+\usepackage{comment}
+\usepackage{cancel}
+
+\lstset{
+    basicstyle=\ttfamily,
+    escapeinside={||},
+    xleftmargin=.1\textwidth,
+    mathescape=true,
+      literate=           %To have access to French accents in code blocks in lstlisting. For pseudocode and comments. See https://tex.stackexchange.com/a/85947
+        {à}{{\`a}}1
+        {â}{{\^a}}1
+        {ä}{{\"a}}1
+        {é}{{\'e}}1
+        {è}{{\`e}}1
+        {ê}{{\^e}}1
+        {ë}{{\"e}}1
+        {î}{{\^i}}1
+        {ï}{{\"i}}1
+        {ô}{{\^o}}1
+        {ö}{{\"o}}1
+        {ù}{{\`u}}1
+        {û}{{\^u}}1
+        {ü}{{\"u}}1
+        {ÿ}{{\"y}}1
+        {ç}{{\c{c}}}1
+        {À}{{\`A}}1
+        {Â}{{\^A}}1
+        {Ä}{{\"A}}1
+        {É}{{\'E}}1
+        {È}{{\`E}}1
+        {Ê}{{\^E}}1
+        {Ë}{{\"E}}1
+        {Î}{{\^I}}1
+        {Ï}{{\"I}}1
+        {Ô}{{\^O}}1
+        {Ö}{{\"O}}1
+        {Ù}{{\`U}}1
+        {Û}{{\^U}}1
+        {Ü}{{\"U}}1
+        {Ÿ}{{\"Y}}1
+        {Ç}{{\c{C}}}1
+}
+
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhead[L]{\nomUn, \nomDeux}
+\fancyhead[C]{\devoir}
+\fancyhead[R]{\sigle}
+
+\newcommand{\nomUn}{C. Lungescu}
+\newcommand{\nomcompletUn}{Christian Lungescu}
+\newcommand{\matriculeUn}{\texttt{Matricule 20079725}}
+\newcommand{\nomDeux}{F. Rouleau }%Félix}
+\newcommand{\nomcompletDeux}{Félix Rouleau}%Félix}
+\newcommand{\matriculeDeux}{\texttt{Matricule 20188552}}%Félix}
+\newcommand{\devoir}{Travail pratique 1}
+\newcommand{\sigle}{IFT 2035 E22}
+
+
+\title{Travail pratique 1}
+\author{
+\nomcompletUn\\
+\matriculeUn\\
+\nomcompletDeux\\
+\matriculeDeux
+}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\section{Analyse du document explicatif}
+\subsection{Syntaxe}
+
+Pour ce travail pratique, nous avons commencé par lire le document explicatif plusieurs fois, en l'analysant de plus en plus profondément à chaque relecture de manière itérative. Nous nous sommes d'abord concentré sur la syntaxe et le sucre de Psil. Nous avons tenté de comprendre comment chaque opération syntaxique fonctionnait. Les résultats attendus dans le fichier \texttt{exemples.psil} nous ont également aidés pour cela.\\
+
+Nous avons annoté le fichier \texttt{psil.pdf} et traduit certaines opérations et exemples du fichier \texttt{exemples.psil} en langage français afin de nous aider à mieux les comprendre. Par exemple, l'exemple suivant :
+
+\begin{lstlisting}
+letfn $sum$ (($xs$ (List Int))) Int
+  (case $xs$
+    (nil $0$)
+    ((cons $x$ $xs$) ($+$ $x$ ($sum$ $xs$))))
+  ($sum$ (list Int $5$ $6$)))
+\end{lstlisting}
+
+a été traduit en français de la manière suivante : "La fonction $sum$, qui retourne une valeur de type \texttt{Int}, prendre un argument $xs$ de type \texttt{List Int}, une liste de type \texttt{Int}. Si $xs$ est \texttt{nil} la liste vide, elle retourne $0$. Si $xs$ a au moins un élément, elle additionne le premier élément à l'appel récursif $(sum xs)$, où xs représente maintenant le reste de la liste. Enfin, on appelle la fonction avec une liste de type Int contenant 5 et 6.\\
+
+Ensuite, nous avons tenté d'analyser les étapes effectuées lors des divers exemples et opérations. Pour l'exemple précédent, nous nous avons écrit un genre de pseudo-code représentant les étapes que la fonction va calculer :
+
+\begin{lstlisting}
+case [5 . 6] == (cons 5 6)
+$\rightarrow$ (+ 5 (sum [6]))
+$\rightarrow$ (+ 5 (case [6] == (cons 6 nil)))
+$\rightarrow$ (+ 5 (+ 6 (sum nil)))
+$\rightarrow$ (+ 5 (+ 6 (case nil = nil)))
+$\rightarrow$ (+ 5 (+ 6 (0)))
+$\rightarrow$ 11
+\end{lstlisting}
+
+\subsection{Typage}
+
+Nous nous sommes ensuite concentré sur les règles de typage. Nous avons là-aussi traduit les règles de typage en langage français afin de mieux les comprendre. Par exemple, la règle :
+
+\begin{equation}
+    \frac{ }{\Gamma \vdash n : Int}
+\end{equation}
+
+a été traduit en français de la manière suivante : "Dans tous les cas, si on a $n$, alors son type est \texttt{Int}".\\
+
+La règle :
+
+\begin{equation}
+    \frac{\Gamma \vdash e_1 : (\tau_1 \rightarrow \tau_2) \;\;\;\;\;\;\;\ \Gamma \vdash e_2 : \tau_1}{\Gamma \vdash (e_1 \; e_2) : \tau_2}
+\end{equation}
+
+a été traduit en français de la manière suivante : "Si on a la fonction $e_1$ de type $(\tau_1 \rightarrow \tau_2)$, qui prend une valeur de type $\tau_1$ et retourne une valeur de type $\tau_2$ et si on a $e_2$ de type $\tau_2$, alors: si on a un appel de fonction $(e_1 \; e_2)$, la fonction $e_1$ avec $e_2$ en argument, alors son type est le type de son argument $e_2$, soit $\tau_2$".
+
+\section{Analyse du code fourni}
+\subsection{Sexp}
+
+Ensuite, nous sommes concentré sur le le fichier \texttt{psil.hs}. Nous avons d'abord analysé les \texttt{Sexp, Lexp, Var, Ltype, Tenv, Value, Tenv}. Ensuite, nous avons analysé plus en profondeur la manière dont une expression est traduite en \texttt{Sexp}. Nous avons initialement eu de la difficulté à différencier expressions avec plusieurs parenthèses des expressions avec peu de parenthèses et la manière dont les parenthèses étaient représentées. Nous avons utilisé la fonction donnée \texttt{readSexp} pour nous aider.\\
+
+Nous avons remarqué que l'expression $(+ 2 5)$ était représentée en \texttt{Sexp} comme :
+
+\begin{lstlisting}
+Scons (Scons (Scons Snil (Ssym "+")) (Snum 2)) (Snum 5)
+\end{lstlisting}
+
+tandis que l'expression $((+ 2) 5)$ était représentée en \texttt{Sexp} comme :
+
+\begin{lstlisting}
+Scons (Scons Snil (Scons (Scons Snil (Ssym "+")) (Snum 2))) (Snum 5)
+\end{lstlisting}
+
+Après quelques autres essais avec encore plus de parenthèses, nous avons déduit que chaque parenthèse additionnelle rajoute un \texttt{Scons} et un \texttt{Snil} supplémentaires. Cela nous a aidé pour la suite, par exemple lorsque nous avons dû implanter le sucre syntaxique $(e_0\;e_1\;e_2\;\ldots\;e_n)\;\iff\;(\ldots\;((e_0\;e_1)\;e_2)\;\ldots\;e_n)$.
+
+\subsection{Lexp}
+
+Ensuite, nous avons tenté de comprendre comment les expressions \texttt{Sexp} pourront être traduites en \texttt{Lexp}. Par exemple, pour la construction de listes avec \texttt{(cons} $e_1$ $e_2$ \texttt{)}, le \texttt{Lexp} équivalent utilise \texttt{Lcons Lexp Lexp}, donc nous avons conclu que pour le coder, nous allions devoir appliquer récursivement \texttt{s2l} à $e_1$ et à $e_2$, car ils devront eux-mêmes être individuellement convertis en \texttt{Lexp}.
+
+\section{Codage}
+\subsection{s2t, s2l et eval}
+
+Par la suite, nous avons commencer à écrire le code. Nous avons d'abord codé les deux cas non codés de \texttt{s2t}, pour le type d'une fonction et le type d'une liste. Ensuite, nous nous sommes concentré sur \texttt{s2l} et sur \texttt{eval}. Nous avons codé chaque cas (\texttt{let}, \texttt{cons}, etc.) l'un après l'autre, en alternant entre \texttt{s2l} et \texttt{eval} et en s'assurant que les exemples du fichier \texttt{exemples.psil} ainsi que nos propres exemples fonctionnaient.\\
+Puisque nous n'avions pas encore codé \texttt{check}, nous mettions en commentaire tous les exemples précédant celui que nous voulions tester, nous utilisions \texttt{run "exemples.txt"} et nous ignorions ce qui était retourné par la console à droite du "\texttt{:}", car nous ne nous étions par encore concentré sur \texttt{check} et sur les types.\\
+
+Par exemple, pour :
+
+\begin{lstlisting}
+(let ((x 5)) (* x 4))
+\end{lstlisting}
+
+nous obtenions :
+
+\begin{lstlisting}
+20 : *** Exception: $\ldots$: Non-exhaustive patterns in function check
+\end{lstlisting}
+
+plutôt que :
+
+\begin{lstlisting}
+20 : Int
+\end{lstlisting}
+
+indiquant que le pattern de \texttt{check} n'était pas exhaustif, mais cela était correct, car nous ne nous étions pas encore concentré sur les types et les résultats indiquaient que nous avions correctement codé la partie gauche du "\texttt{:}".\\
+
+\subsection{check}
+
+Enfin, nous nous sommes concentré sur les règles de typage et la vérification des types. Nous avons commencé par la vérification de l'appel de fonctions. Nous avons analysé la manière dont rajouter un élément affecte la notation Ltype. Par exemple, \texttt{(+)} retourne \texttt{Lfun Lint (Lfun Lint Lint)}, équivalant à \texttt{Int -> Int -> Int}, \texttt{(+ 2)} retourne \texttt{Lfun Lint Lint}, équivivalant à \texttt{Int -> Int}, et \texttt{(+ 2)} doit retourner \texttt{Lint}, équivalant à \texttt{Int}. Pour chaque nouvel élément, on retourne le type de la valeur de retour du type du premier élément. \\ 
+
+Ainsi, nous avons déduit, avec ceci et la quatrième règle de typage de la figure 2 à la page 4 du fichier \texttt{psil.pdf}, qu'à chaque nouvel élément de l'appel de fonction, on doit vérifier que l'élément précédent est du bon type, et on retourne le type du dernier élément.\\
+
+Pour ce faire, nous nous sommes créé une fonction auxiliaire \texttt{prune} :
+
+\begin{lstlisting}
+prune :: Ltype -> Ltype -> Ltype
+prune (Lfun Lint (t2)) Lint = t2
+prune (Lfun (Llist t) (t2)) (Llist t') = if t == t'
+  then e2 else error "Type mismatch"
+\end{lstlisting}
+
+Si l'argument est de type \texttt{Lint} et la fonction est de type (Lfun Lint (t2)), donc si la fonction prend en entrée le même type que le type de l'argument, et si le type de retour de la fonction est \texttt{t2}, alors on retourne le type \texttt{t2}. De même pour les listes de listes.
+
+
+\end{document}
