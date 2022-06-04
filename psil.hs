@@ -215,7 +215,6 @@ s2l (Scons (Scons Snil (Ssym "nil")) se) = Lnil (s2t se)
 s2l (Scons (Scons (Scons Snil (Ssym "cons")) e1) initalList) = (Lcons (s2l e1) (s2l initalList))
 -- Let expressions
 s2l (Scons (Scons (Scons Snil (Ssym "let")) (Scons Snil (Scons (Scons Snil (Ssym var)) val))) body) = (Llet var (s2l val) (s2l body))
---  (Scons (Scons (Scons Snil (Ssym "let")) (Scons Snil (Scons (Scons Snil (Ssym "x")) (Snum 5)))) (Scons (Scons (Scons Snil (Ssym "*")) (Ssym "x")) (Snum 4))
 
 -- Appel de fonction
 s2l (Scons (Scons Snil (Ssym op)) re) = (Linvoke (s2l (Ssym op)) (s2l re))
@@ -248,6 +247,8 @@ s2l (Scons (Scons (Scons Snil (Ssym ":")) e) t) = (s2l e)
 -- Scons (Scons (Scons Snil (Ssym ":")) (Scons (Scons Snil (Ssym "+")) (Snum 5))) (Scons (Scons (Scons Snil (Ssym "Int")) (Ssym "->")) (Ssym "Int"))
 
 
+
+s2l se = error ("Malformed Psil: " ++ (showSexp se))
 
 -- Construction de listes avec cons (sans sucre syntaxique)
 -- MAYBE? cas (cons [] [])
@@ -290,7 +291,6 @@ s2l (Scons (Scons (Scons Snil (Ssym ":")) e) t) = (s2l e)
 --bof...
 
 
-s2l se = error ("Malformed Psil: " ++ (showSexp se))
 
 
 --       whatever
@@ -420,7 +420,18 @@ type TEnv = Var -> Ltype
 check :: TEnv -> Lexp -> Ltype
 check _tenv (Lnum _) = Lint
 check tenv (Lvar v) = tenv v
--- ¡¡¡ COMPLETER ICI !!! --
+-- Vérification de l'appel de fonctions
+check tenv (Linvoke e1 e2) = prune (check tenv e1) (check tenv e2)
+check tenv (Lnil t) = (Llist t)
+check tenv (Lcons e1 e2) = check tenv e2
+check tenv (Llet var val body) = check (extend tenv var (check tenv val)) body
+
+extend :: TEnv -> Var -> Ltype -> TEnv
+extend tenv var t = \v -> if v == var then t else tenv v
+
+
+prune :: Ltype -> Ltype -> Ltype
+prune (Lfun Lint (e2)) Lint = e2
 
 
 tenv0 :: TEnv
@@ -490,6 +501,7 @@ eval env (Linvoke e re) =
     Vlambda f -> f (eval env re)
     _ -> error ("Not a function: " ++ show e)
 
+-- Adding variables to the environment
 eval env (Llet x val body) =
     let v = eval env val
         env' y = if (x == y) then v else env y
